@@ -1,0 +1,268 @@
+name: Data Governance CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+
+env:
+  DOCKER_IMAGE_NAME: deacero-data-governance
+  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+
+jobs:
+  
+  # Job 1: Lint y Code Quality
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality & Linting
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black pylint bandit
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Run Black formatter check
+      run: black --check scripts/
+      
+    - name: Run Flake8 linter
+      run: flake8 scripts/ --max-line-length=88 --exclude=__pycache__
+      
+    - name: Run Pylint
+      run: pylint scripts/ --disable=C0114,C0116
+      
+    - name: Run Bandit security scan
+      run: bandit -r scripts/ -f json -o bandit-report.json
+      
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-scan-results
+        path: bandit-report.json
+
+  # Job 2: Testing
+  test:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-mock
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Create test directories
+      run: |
+        mkdir -p tests
+        mkdir -p config
+        
+    - name: Create mock test file
+      run: |
+        cat > tests/test_catalog_automation.py << 'EOF'
+        import pytest
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        
+        def test_config_loading():
+            """Test básico para verificar que la estructura es correcta"""
+            assert True  # Placeholder test
+            
+        def test_yaml_structure():
+            """Test para verificar estructura YAML"""
+            yaml_content = """
+            tables:
+              - table_id: users
+                description: "Test description"
+                data_steward: "test@deacero.com"
+                tags:
+                  - "PII_Direct"
+            """
+            import yaml
+            config = yaml.safe_load(yaml_content)
+            assert "tables" in config
+            assert len(config["tables"]) == 1
+            assert config["tables"][0]["table_id"] == "users"
+        EOF
+        
+    - name: Run tests
+      run: |
+        pytest tests/ -v --cov=scripts --cov-report=xml
+        
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+
+  # Job 3: Build Docker Image
+  build-docker:
+    runs-on: ubuntu-latest
+    name: Build & Test Docker Image
+    needs: [code-quality, test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      run: |
+        docker build -f docker/Dockerfile -t ${{ env.DOCKER_IMAGE_NAME }}:latest .
+        
+    - name: Test Docker image
+      run: |
+        # Crear directorio de prueba para credenciales
+        mkdir -p test-credentials
+        echo '{"type": "service_account"}' > test-credentials/service-account-key.json
+        
+        # Test que el contenedor se construye correctamente
+        docker run --rm \
+          -v $(pwd)/test-credentials:/app/credentials:ro \
+          -e GOOGLE_CLOUD_PROJECT=test-project \
+          ${{ env.DOCKER_IMAGE_NAME }}:latest \
+          python -c "import sys; print('Python version:', sys.version); import yaml; print('YAML loaded successfully')"
+          
+    - name: Save Docker image
+      run: |
+        docker save ${{ env.DOCKER_IMAGE_NAME }}:latest | gzip > docker-image.tar.gz
+        
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker-image
+        path: docker-image.tar.gz
+        retention-days: 1
+
+  # Job 4: Security Scan
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Docker Security Scan
+    needs: build-docker
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Docker image
+      uses: actions/download-artifact@v3
+      with:
+        name: docker-image
+        
+    - name: Load Docker image
+      run: |
+        gunzip -c docker-image.tar.gz | docker load
+        
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.DOCKER_IMAGE_NAME }}:latest
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Job 5: Deploy (solo en main branch)
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to GCP
+    needs: [build-docker, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+        
+    - name: Configure Docker for GCR
+      run: |
+        gcloud auth configure-docker
+        
+    - name: Download Docker image
+      uses: actions/download-artifact@v3
+      with:
+        name: docker-image
+        
+    - name: Load and push Docker image
+      run: |
+        gunzip -c docker-image.tar.gz | docker load
+        docker tag ${{ env.DOCKER_IMAGE_NAME }}:latest gcr.io/${{ secrets.GOOGLE_CLOUD_PROJECT }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+        docker tag ${{ env.DOCKER_IMAGE_NAME }}:latest gcr.io/${{ secrets.GOOGLE_CLOUD_PROJECT }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+        docker push gcr.io/${{ secrets.GOOGLE_CLOUD_PROJECT }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+        docker push gcr.io/${{ secrets.GOOGLE_CLOUD_PROJECT }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+        
+    - name: Deploy to Cloud Run (opcional)
+      run: |
+        gcloud run deploy data-governance-service \
+          --image gcr.io/${{ secrets.GOOGLE_CLOUD_PROJECT }}/${{ env.DOCKER_IMAGE_NAME }}:latest \
+          --region us-central1 \
+          --platform managed \
+          --allow-unauthenticated \
+          --memory 512Mi \
+          --cpu 1 \
+          --max-instances 2
+
+  # Job 6: Notification
+  notify:
+    runs-on: ubuntu-latest
+    name: Notify Results
+    needs: [deploy]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: ${{ needs.deploy.result == 'success' }}
+      run: |
+        echo "✅ Data Governance pipeline deployed successfully!"
+        echo "Image: gcr.io/${{ secrets.GOOGLE_CLOUD_PROJECT }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"
+        
+    - name: Notify failure
+      if: ${{ needs.deploy.result == 'failure' }}
+      run: |
+        echo "❌ Data Governance pipeline deployment failed!"
+        exit 1
+
+

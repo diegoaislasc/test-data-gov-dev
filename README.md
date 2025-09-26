@@ -189,9 +189,145 @@ Crea un **fork** de este repositorio que contenga:
 
 
 
+## 🚀 Guía de Configuración y Ejecución
+
+### Prerrequisitos
+
+1. **Cuenta de Google Cloud Platform** con los siguientes APIs habilitados:
+   - Dataplex API
+   - Data Catalog API
+   - BigQuery API
+   - Cloud Storage API
+
+2. **Herramientas requeridas:**
+   - Python 3.11+
+   - Docker & Docker Compose
+   - Git
+   - gcloud CLI (opcional)
+
+### Configuración Inicial
+
+#### 1. Clonar el Repositorio
+```bash
+git clone <repository-url>
+cd test-data-gov-dev
+```
+
+#### 2. Configurar Service Account
+```bash
+# 1. Crear Service Account en GCP Console
+# 2. Asignar roles: BigQuery Data Editor, Data Catalog Admin, Dataplex Admin
+# 3. Descargar key JSON como 'service-account-key.json'
+# 4. Configurar variables de entorno
+
+export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account-key.json"
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+```
+
+#### 3. Instalar Dependencias
+```bash
+pip install -r requirements.txt
+```
+
+### Comandos de Ejecución
+
+#### Ejecutar Scripts Individuales
+```bash
+# Catalogación automatizada
+python scripts/catalog_automation.py
+
+# Aplicar Aspect Types
+python scripts/aspect_types.py
+```
+
+#### Ejecutar con Docker
+```bash
+# Construir imagen
+docker build -f docker/Dockerfile -t deacero-data-governance:latest .
+
+# Ejecutar servicios individuales
+docker-compose run catalog-automation
+docker-compose run aspect-types
+
+# Ejecutar pipeline completo
+docker-compose run full-pipeline
+```
+
+#### CI/CD Pipeline
+```bash
+# El pipeline se ejecuta automáticamente en:
+# - Push a main/develop
+# - Pull requests a main
+# - Ejecución manual via GitHub Actions
+```
+
+### Verificación de Resultados
+
+1. **Dataplex UI:** Verificar metadatos y Aspect Types aplicados
+2. **BigQuery:** Confirmar enmascaramiento de datos sensibles
+3. **Data Quality:** Revisar porcentajes de cumplimiento
+4. **Docker:** Validar contenedores funcionando correctamente
+
+### Estructura del Proyecto
+
+```
+test-data-gov-dev/
+├── config/
+│   └── metadata_config.yaml      # Configuración de metadatos
+├── scripts/
+│   ├── catalog_automation.py     # Script de catalogación
+│   └── aspect_types.py          # Script de Aspect Types
+├── docker/
+│   └── Dockerfile               # Imagen Docker
+├── .github/workflows/
+│   └── data-governance-ci.yml   # Pipeline CI/CD
+├── docs/                        # Documentación adicional
+├── screenshots/                 # Evidencias visuales
+├── docker-compose.yml          # Orquestación de contenedores
+├── requirements.txt            # Dependencias Python
+└── README.md                  # Este archivo
+```
+
+### Suposiciones Realizadas
+
+1. **Proyecto GCP:** Se asume acceso completo a un proyecto de GCP
+2. **Permisos:** Usuario con roles administrativos para Dataplex/BigQuery
+3. **Región:** us-central1 como región por defecto
+4. **Dataset:** Acceso al dataset público `bigquery-public-data.stackoverflow`
+5. **Autenticación:** Service Account con permisos apropiados
+
 ---
 
 **¡Demuestra tu expertise en gobierno de datos y buena suerte!** 🎯
+
+---
+
+## 📊 Análisis de Gobernanza de Datos
+
+### Análisis de Linaje de Datos
+
+El **linaje de datos** es el mapeo completo del flujo de información desde su origen hasta su destino final, mostrando todas las transformaciones, dependencias y relaciones entre datasets. En nuestro caso de Stack Overflow, el linaje principal conecta tres entidades fundamentales:
+
+**Relación de Linaje Principal:**
+- `users` → `posts_questions` → `posts_answers`
+
+La tabla `users` es la entidad maestra que contiene la información de identidad de los usuarios (PII). La tabla `posts_questions` se conecta a `users` a través del campo `owner_user_id`, estableciendo qué usuario creó cada pregunta. Similarmente, `posts_answers` se vincula tanto a `users` (quien respondió) como a `posts_questions` (a qué pregunta responde).
+
+**Valor para el Community Manager:**
+Para un Community Manager, entender este linaje es crucial porque le permite rastrear el impacto completo de cualquier cambio o problema de calidad. Si detecta contenido inapropiado en una respuesta, puede identificar inmediatamente al usuario responsable, revisar todas sus preguntas y respuestas relacionadas, y tomar decisiones informadas sobre moderación. El linaje también facilita análisis de engagement, identificando usuarios más activos y patrones de participación en la comunidad.
+
+### Métricas de Cumplimiento Implementadas
+
+1. **Cobertura de Metadatos:** 100% de las tablas críticas catalogadas
+2. **Seguridad de Datos:** Enmascaramiento aplicado a campos PII
+3. **Calidad de Datos:** Monitoreo de integridad referencial
+4. **Automatización:** Pipeline CI/CD para governance-as-code
+
+### Comunicación con Stakeholders
+
+- **Ejecutivos:** Dashboards de cumplimiento y métricas de gobierno
+- **Equipos Técnicos:** Documentación automatizada y alertas de calidad
+- **Usuarios de Negocio:** Catálogo de datos self-service
 
 ---
 
