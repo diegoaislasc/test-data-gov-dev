@@ -219,7 +219,7 @@ class DataCatalogAutomation:
                 logger.info(f"Procesando tabla: {table_id}")
                 
                 # Obtener entrada de la tabla
-                entry_name = self.get_table_entry(self.project_id, "stackoverflow_copy", table_id)
+                entry_name = self.get_table_entry(self.project_id, "stackoverflow", table_id)
                 
                 # Intentar actualizar descripción (puede fallar si es entrada sincronizada)
                 try:
