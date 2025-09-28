@@ -217,3 +217,5 @@ if [[ "$response" =~ ^[Yy]$ ]]; then
 fi
 
 echo -e "\n${BLUE}¡Buena suerte en tu entrevista! 🚀${NC}"
+
+

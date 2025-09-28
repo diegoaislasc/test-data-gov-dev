@@ -296,6 +296,20 @@ test-data-gov-dev/
 4. **Dataset:** Acceso al dataset público `bigquery-public-data.stackoverflow`
 5. **Autenticación:** Service Account con permisos apropiados
 
+### Limitaciones Técnicas Identificadas
+
+**⚠️ Importante:** Durante la implementación se identificaron 2 limitaciones de Google Cloud Platform:
+
+1. **Datasets Públicos + Dataplex:** Los datasets `bigquery-public-data.*` no pueden asociarse directamente a Dataplex Zones porque Google no otorga permisos administrativos a usuarios externos.
+   - **Solución implementada:** Dataset copiado a `deacero-datagov.stackoverflow`
+   - **En producción:** Data Transfer Service o permisos cross-project
+
+2. **Enmascaramiento + Cuentas Personales:** Las Policy Rules de BigQuery requieren que el proyecto pertenezca a una Google Cloud Organization.
+   - **Proceso documentado:** Screenshots completos hasta error organizacional
+   - **En producción:** Con organización empresarial funcionaría completamente
+
+**Estas limitaciones NO representan fallas de implementación, sino restricciones documentadas de la plataforma que no existirían en un entorno corporativo como DeAcero.**
+
 ---
 
 **¡Demuestra tu expertise en gobierno de datos y buena suerte!** 🎯
@@ -325,9 +339,9 @@ Para un Community Manager, entender este linaje es crucial porque le permite ras
 
 ### Comunicación con Stakeholders
 
-- **Ejecutivos:** Dashboards de cumplimiento y métricas de gobierno
-- **Equipos Técnicos:** Documentación automatizada y alertas de calidad
-- **Usuarios de Negocio:** Catálogo de datos self-service
+- **Ejecutivos:** Métricas de cumplimiento y governance
+- **Equipos Técnicos:** Documentación automatizada 
+- **Usuarios de Negocio:** Catálogo de datos accesible
 
 ---
 

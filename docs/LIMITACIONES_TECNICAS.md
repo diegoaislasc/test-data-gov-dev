@@ -182,3 +182,5 @@ Las limitaciones técnicas identificadas **fortalecen la evaluación** del candi
 **Desarrollado por:** Diego Islas  
 **Fecha:** Septiembre 2025  
 **Propósito:** Documentación técnica para evaluación de competencias
+
+
