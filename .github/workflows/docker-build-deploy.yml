@@ -38,7 +38,8 @@ jobs:
     - name: Validar configuración Docker
       run: |
         docker --version
-        docker-compose config
+        docker compose version
+        docker compose config
 
   # Job de construcción de imagen Docker
   build:
@@ -121,7 +122,7 @@ jobs:
         echo '{"type": "service_account"}' > deacero-datagov-sa-key.json
         
         # Test de construcción local
-        docker-compose build
+        docker compose build
         
         # Test de health check
         docker run --rm -e GOOGLE_APPLICATION_CREDENTIALS=/dev/null \

@@ -92,28 +92,28 @@ shell: ## Abrir shell en contenedor
 		$(IMAGE_NAME):$(IMAGE_TAG) /bin/bash
 
 # Docker Compose
-compose-build: ## Construir con docker-compose
-	@echo "${YELLOW}Construyendo con docker-compose...${NC}"
-	docker-compose build
+compose-build: ## Construir con docker compose
+	@echo "${YELLOW}Construyendo con docker compose...${NC}"
+	docker compose build
 	@echo "${GREEN}✅ Construcción completada${NC}"
 
-compose-up: ## Iniciar servicios con docker-compose
+compose-up: ## Iniciar servicios con docker compose
 	@echo "${YELLOW}Iniciando servicios...${NC}"
-	docker-compose up -d
+	docker compose up -d
 	@echo "${GREEN}✅ Servicios iniciados${NC}"
 
 compose-logs: ## Ver logs de servicios
 	@echo "${YELLOW}Mostrando logs...${NC}"
-	docker-compose logs -f
+	docker compose logs -f
 
 compose-down: ## Detener servicios
 	@echo "${YELLOW}Deteniendo servicios...${NC}"
-	docker-compose down
+	docker compose down
 	@echo "${GREEN}✅ Servicios detenidos${NC}"
 
 compose-status: ## Ver estado de servicios
 	@echo "${YELLOW}Estado de servicios:${NC}"
-	docker-compose ps
+	docker compose ps
 
 # Deployment
 deploy: ## Desplegar usando script
@@ -122,15 +122,15 @@ deploy: ## Desplegar usando script
 
 deploy-catalog: ## Desplegar solo catalogación
 	@echo "${YELLOW}Desplegando catalogación...${NC}"
-	docker-compose up catalog-automation
+	docker compose up catalog-automation
 
 deploy-masking: ## Desplegar solo enmascaramiento
 	@echo "${YELLOW}Desplegando enmascaramiento...${NC}"
-	docker-compose up data-masking
+	docker compose up data-masking
 
 deploy-full: ## Desplegar pipeline completo
 	@echo "${YELLOW}Desplegando pipeline completo...${NC}"
-	docker-compose up full-pipeline
+	docker compose up full-pipeline
 
 # Maintenance
 clean: ## Limpiar recursos Docker
@@ -146,7 +146,7 @@ clean-images: ## Limpiar imágenes Docker
 
 clean-all: ## Limpieza completa
 	@echo "${YELLOW}Limpieza completa...${NC}"
-	docker-compose down --volumes --remove-orphans
+	docker compose down --volumes --remove-orphans
 	docker rmi $(IMAGE_NAME):$(IMAGE_TAG) 2>/dev/null || true
 	docker system prune -f
 	@echo "${GREEN}✅ Limpieza completa terminada${NC}"
@@ -169,7 +169,7 @@ ci-pipeline: dev-test compose-build ## Pipeline completo como CI
 # Quality checks
 check-config: ## Verificar configuraciones
 	@echo "${YELLOW}Verificando configuraciones...${NC}"
-	docker-compose config
+	docker compose config
 	@echo "${GREEN}✅ Configuraciones válidas${NC}"
 
 check-dependencies: ## Verificar dependencias actualizadas

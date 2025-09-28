@@ -5,7 +5,7 @@ echo "🧹 Limpiando recursos de Data Governance..."
 
 # Detener y remover contenedores
 echo "🛑 Deteniendo contenedores..."
-docker-compose down
+docker compose down
 
 # Remover imagen si existe
 echo "🗑️ Removiendo imagen Docker..."

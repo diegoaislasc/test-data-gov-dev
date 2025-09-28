@@ -21,20 +21,20 @@ fi
 export GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-"deacero-data-governance"}
 
 echo "📦 Construyendo imagen Docker..."
-docker-compose build --no-cache
+docker compose build --no-cache
 
 echo "🔄 Iniciando servicios..."
-docker-compose up -d
+docker compose up -d
 
 echo "📊 Estado de los contenedores:"
-docker-compose ps
+docker compose ps
 
 echo "📋 Para ver logs:"
-echo "  docker-compose logs -f data-governance"
-echo "  docker-compose logs -f catalog-automation"
-echo "  docker-compose logs -f data-masking"
+echo "  docker compose logs -f data-governance"
+echo "  docker compose logs -f catalog-automation"
+echo "  docker compose logs -f data-masking"
 
 echo "🛑 Para detener:"
-echo "  docker-compose down"
+echo "  docker compose down"
 
 echo "✅ Deployment completado!"
