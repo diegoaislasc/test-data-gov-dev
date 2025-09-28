@@ -1,0 +1,23 @@
+# Configuración de Hadolint para Data Governance
+# Ignora warnings que no son críticos para nuestro caso de uso
+
+ignored:
+  # DL3008: Pin versions in apt get install
+  # Ignorado porque las versiones exactas de apt pueden cambiar y romper builds
+  - DL3008
+  
+  # DL3013: Pin versions in pip
+  # Ignorado porque usamos requirements.txt con versiones específicas
+  - DL3013
+
+# Reglas permitidas
+trusted-registries:
+  - docker.io
+  - gcr.io
+  - ghcr.io
+
+# Configuración de severidad
+failure-threshold: error
+
+# Formato de salida  
+format: tty
