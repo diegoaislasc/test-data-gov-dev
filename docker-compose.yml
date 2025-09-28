@@ -23,17 +23,13 @@ services:
     command: ["python", "scripts/catalog_automation.py"]
     
     
-  # Servicio para enmascaramiento de datos
-  data-masking:
+  # Nota: Enmascaramiento de datos y Aspect Types se configuran en GCP Console
+  
+  # Servicio para verificar configuración
+  verification:
     extends: data-governance
-    container_name: deacero-data-masking
-    command: ["python", "scripts/data_masking.py"]
-    
-  # Servicio para ejecutar todo el pipeline
-  full-pipeline:
-    extends: data-governance
-    container_name: deacero-full-pipeline
-    command: ["/bin/bash", "-c", "python scripts/catalog_automation.py && python scripts/data_masking.py"]
+    container_name: deacero-verification
+    command: ["python", "scripts/verification_checklist.py"]
 
 networks:
   governance-network:

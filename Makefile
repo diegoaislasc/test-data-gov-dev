@@ -74,13 +74,13 @@ run-catalog: ## Ejecutar solo catalogación
 		-v $(PWD)/config:/app/config:ro \
 		$(IMAGE_NAME):$(IMAGE_TAG) python scripts/catalog_automation.py
 
-run-masking: ## Ejecutar solo enmascaramiento
-	@echo "${YELLOW}Ejecutando enmascaramiento...${NC}"
-	docker run --rm --name $(IMAGE_NAME)-masking \
+run-verification: ## Ejecutar verificación del proyecto
+	@echo "${YELLOW}Ejecutando verificación...${NC}"
+	docker run --rm --name $(IMAGE_NAME)-verification \
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/service-account-key.json \
 		-v $(PWD)/deacero-datagov-sa-key.json:/app/credentials/service-account-key.json:ro \
 		-v $(PWD)/config:/app/config:ro \
-		$(IMAGE_NAME):$(IMAGE_TAG) python scripts/data_masking.py
+		$(IMAGE_NAME):$(IMAGE_TAG) python scripts/verification_checklist.py
 
 shell: ## Abrir shell en contenedor
 	@echo "${YELLOW}Abriendo shell en contenedor...${NC}"
@@ -124,9 +124,9 @@ deploy-catalog: ## Desplegar solo catalogación
 	@echo "${YELLOW}Desplegando catalogación...${NC}"
 	docker compose up catalog-automation
 
-deploy-masking: ## Desplegar solo enmascaramiento
-	@echo "${YELLOW}Desplegando enmascaramiento...${NC}"
-	docker compose up data-masking
+deploy-verification: ## Desplegar verificación
+	@echo "${YELLOW}Ejecutando verificación...${NC}"
+	docker compose up verification
 
 deploy-full: ## Desplegar pipeline completo
 	@echo "${YELLOW}Desplegando pipeline completo...${NC}"
