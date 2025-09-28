@@ -125,10 +125,17 @@ jobs:
         # Test de construcción local
         docker compose build
         
+        # Test de health check usando docker compose
+        echo "✅ Testing docker compose services..."
+        docker compose config
+        
         # Test de health check
-        docker run --rm -e GOOGLE_APPLICATION_CREDENTIALS=/dev/null \
-          ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest \
-          python -c "print('Health check passed')"
+        docker compose run --rm -e GOOGLE_APPLICATION_CREDENTIALS=/dev/null \
+          data-governance python -c "print('Health check passed')"
+          
+        # Test que los servicios se puedan crear
+        docker compose create data-governance
+        echo "✅ Integration tests passed!"
 
   # Job de deployment (solo en branch principal)
   deploy:
