@@ -88,13 +88,14 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         
-    - name: Generar artifact attestation
+    - name: Mostrar información de la imagen
       if: github.event_name != 'pull_request'
-      uses: actions/attest-build-provenance@v1
-      with:
-        subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
-        subject-digest: ${{ steps.build.outputs.digest }}
-        push-to-registry: true
+      run: |
+        echo "✅ Imagen construida exitosamente:"
+        echo "📦 Registry: ${{ env.REGISTRY }}"
+        echo "🏷️ Tags: ${{ steps.meta.outputs.tags }}"
+        echo "🔍 Digest: ${{ steps.build.outputs.digest }}"
+        echo "📅 Labels: ${{ steps.meta.outputs.labels }}"
 
   # Job de pruebas de integración
   integration-test:
