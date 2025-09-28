@@ -34,25 +34,6 @@ Google Cloud Platform Restriction:
 2. **Comprensión del flujo:** Proceso completo ejecutado hasta la restricción
 3. **Identificación precisa:** Diagnóstico correcto de la causa del problema
 4. **Documentación exhaustiva:** Screenshots del proceso completo
-
-### **Solución en Entorno Empresarial**
-```sql
--- En entorno corporativo (DeAcero):
--- 1. Copiar datos a dataset propio
-CREATE TABLE `deacero-project.stackoverflow_copy.users` AS 
-SELECT * FROM `bigquery-public-data.stackoverflow.users`;
-
--- 2. Copiar resto de tablas
-CREATE TABLE `deacero-project.stackoverflow_copy.posts_questions` AS 
-SELECT * FROM `bigquery-public-data.stackoverflow.posts_questions`;
-
-CREATE TABLE `deacero-project.stackoverflow_copy.posts_answers` AS 
-SELECT * FROM `bigquery-public-data.stackoverflow.posts_answers`;
-
--- 3. Asociar dataset propio a Dataplex Zone
--- (Esto funcionaría perfectamente porque tendríamos ownership completo)
-```
-
 ---
 
 ## 🏢 Limitación 2: Policy Rules y Google Cloud Organization
@@ -92,32 +73,6 @@ Esta limitación **NO existiría** porque:
 
 ---
 
-## 📊 Impacto y Evaluación
-
-### **Para Revisores Técnicos**
-
-#### **❌ Lo que NO son:**
-- No son errores de implementación
-- No reflejan falta de conocimiento técnico
-- No indican problemas de capacidad técnica
-- No son blockers para evaluación
-
-#### **✅ Lo que SÍ demuestran:**
-- Conocimiento profundo de limitaciones de GCP
-- Experiencia práctica con constraints reales
-- Identificación precisa de restricciones de plataforma
-- Transparencia técnica y comunicación clara
-- Comprensión de diferencias entre entornos personales vs empresariales
-
-### **Valor Agregado para DeAcero**
-
-1. **Experiencia Real:** Enfrentamiento con limitaciones reales de plataforma
-2. **Conocimiento Aplicado:** Comprensión práctica de GCP governance
-3. **Problem-Solving:** Identificación y documentación de blockers
-4. **Preparación Empresarial:** Entendimiento de requerimientos organizacionales
-
----
-
 ## 🔍 Verificación de Competencias
 
 ### **Competencias Técnicas Validadas**
@@ -139,41 +94,7 @@ Esta limitación **NO existiría** porque:
 - ✅ **Documentation:** Registro detallado de procesos y limitaciones
 - ✅ **Alternative Solutions:** Propuestas para entornos empresariales
 - ✅ **Technical Communication:** Explicación clara de restricciones
-
 ---
-
-## 🚀 Recomendaciones para Entorno Corporativo
-
-### **Implementación en DeAcero**
-
-#### **Para Dataplex Assets:**
-1. **Data Transfer Service:** Copiar datasets públicos a proyecto corporativo
-2. **Scheduled Queries:** Mantener datos actualizados automáticamente
-3. **Asset Management:** Asociar datasets propios a Dataplex Zones
-
-#### **Para Data Governance Policies:**
-1. **Organization Setup:** Verificar que proyecto esté bajo organización
-2. **Taxonomy Design:** Implementar estructura jerárquica de PII
-3. **Policy Automation:** Aplicar reglas de enmascaramiento automáticamente
-4. **Monitoring:** Alertas de compliance y violaciones de políticas
-
-#### **Timeline Estimado:**
-- **Setup organizacional:** 1-2 días
-- **Data transfer:** 2-3 días  
-- **Policy implementation:** 3-5 días
-- **Testing y validación:** 2-3 días
-- **Total:** 1-2 semanas para implementación completa
-
----
-
-## 📝 Conclusión
-
-Las limitaciones técnicas identificadas **fortalecen la evaluación** del candidato porque:
-
-1. **Demuestran experiencia real** con las complejidades de GCP
-2. **Muestran conocimiento profundo** de arquitectura de la plataforma
-3. **Indican preparación empresarial** para trabajar en entornos corporativos
-4. **Reflejan transparencia técnica** en comunicación de restricciones
 
 **En el entorno corporativo de DeAcero, todas estas funcionalidades estarían disponibles y funcionarían perfectamente.**
 

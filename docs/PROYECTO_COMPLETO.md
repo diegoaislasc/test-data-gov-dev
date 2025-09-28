@@ -197,13 +197,13 @@ pip install -r requirements.txt
 
 ### Ejecutar Catalogación
 ```bash
-# Método 1: Python directo
+# Metodo 1: Python directo
 python scripts/catalog_automation.py
 
-# Método 2: Docker
+# Metodo 2: Docker
 make run-catalog
 
-# Método 3: Docker Compose
+# Metodo 3: Docker Compose
 docker compose up catalog-automation
 ```
 
