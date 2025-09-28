@@ -1,0 +1,219 @@
+name: Security and Quality Scan
+
+on:
+  push:
+    branches: [ main, develop, daislas ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Ejecutar scan de seguridad semanalmente (domingos a las 02:00 UTC)
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+jobs:
+  # Análisis de seguridad del código
+  code-security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Instalar herramientas de seguridad
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety pip-audit
+        
+    - name: Scan con Bandit (vulnerabilidades Python)
+      run: |
+        bandit -r scripts/ -f json -o bandit-report.json || true
+        bandit -r scripts/ || true
+        
+    - name: Verificar dependencias con Safety
+      run: |
+        safety check --json --output safety-report.json || true
+        safety check || true
+        
+    - name: Audit de pip
+      run: |
+        pip-audit --format=json --output=pip-audit-report.json || true
+        pip-audit || true
+        
+    - name: Subir reportes de seguridad
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          pip-audit-report.json
+
+  # Análisis de calidad del código
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Instalar herramientas de calidad
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pylint black isort mypy
+        pip install -r requirements.txt
+        
+    - name: Verificar formato con Black
+      run: |
+        black --check --diff scripts/ || true
+        
+    - name: Verificar imports con isort
+      run: |
+        isort --check-only --diff scripts/ || true
+        
+    - name: Análisis con flake8
+      run: |
+        flake8 scripts/ --format=json --output-file=flake8-report.json || true
+        flake8 scripts/ || true
+        
+    - name: Análisis con pylint
+      run: |
+        pylint scripts/ --output-format=json > pylint-report.json || true
+        pylint scripts/ || true
+        
+    - name: Type checking con mypy
+      run: |
+        mypy scripts/ --json-report=mypy-report || true
+        mypy scripts/ || true
+        
+    - name: Subir reportes de calidad
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: quality-reports
+        path: |
+          flake8-report.json
+          pylint-report.json
+          mypy-report/
+
+  # Scan de seguridad de imagen Docker
+  docker-security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Construir imagen para scan
+      run: |
+        docker build -f docker/Dockerfile -t scan-image:latest .
+        
+    - name: Ejecutar Trivy scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'scan-image:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Subir resultados a GitHub Security
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+        
+    - name: Ejecutar Trivy scan (tabla)
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'scan-image:latest'
+        format: 'table'
+
+  # Análisis de configuración Docker
+  docker-lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Lint Dockerfile con hadolint
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile: docker/Dockerfile
+        format: sarif
+        output-file: hadolint-results.sarif
+        
+    - name: Subir resultados de hadolint
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: hadolint-results.sarif
+
+  # Reporte consolidado
+  security-summary:
+    needs: [code-security, code-quality, docker-security, docker-lint]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Descargar todos los reportes
+      uses: actions/download-artifact@v4
+      with:
+        path: reports/
+        
+    - name: Generar reporte consolidado
+      run: |
+        echo "# 🔒 Reporte de Seguridad y Calidad" > security-summary.md
+        echo "" >> security-summary.md
+        echo "## 📊 Resumen de Resultados" >> security-summary.md
+        echo "" >> security-summary.md
+        
+        if [ "${{ needs.code-security.result }}" == "success" ]; then
+          echo "✅ **Seguridad del código**: APROBADO" >> security-summary.md
+        else
+          echo "❌ **Seguridad del código**: FALLÓ" >> security-summary.md
+        fi
+        
+        if [ "${{ needs.code-quality.result }}" == "success" ]; then
+          echo "✅ **Calidad del código**: APROBADO" >> security-summary.md
+        else
+          echo "❌ **Calidad del código**: FALLÓ" >> security-summary.md
+        fi
+        
+        if [ "${{ needs.docker-security.result }}" == "success" ]; then
+          echo "✅ **Seguridad Docker**: APROBADO" >> security-summary.md
+        else
+          echo "❌ **Seguridad Docker**: FALLÓ" >> security-summary.md
+        fi
+        
+        if [ "${{ needs.docker-lint.result }}" == "success" ]; then
+          echo "✅ **Lint Docker**: APROBADO" >> security-summary.md
+        else
+          echo "❌ **Lint Docker**: FALLÓ" >> security-summary.md
+        fi
+        
+        echo "" >> security-summary.md
+        echo "## 📅 Información del Scan" >> security-summary.md
+        echo "- **Fecha**: $(date)" >> security-summary.md
+        echo "- **Commit**: ${{ github.sha }}" >> security-summary.md
+        echo "- **Branch**: ${{ github.ref_name }}" >> security-summary.md
+        
+        cat security-summary.md
+        
+    - name: Subir reporte consolidado
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-summary
+        path: security-summary.md

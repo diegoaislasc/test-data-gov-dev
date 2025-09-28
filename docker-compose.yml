@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  data-governance:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: deacero-data-governance
+    environment:
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/service-account-key.json
+    volumes:
+      - ./deacero-datagov-sa-key.json:/app/credentials/service-account-key.json:ro
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts:ro
+      - logs:/app/logs
+    networks:
+      - governance-network
+    restart: unless-stopped
+    
+  # Servicio para ejecutar catalogación
+  catalog-automation:
+    extends: data-governance
+    container_name: deacero-catalog-automation
+    command: ["python", "scripts/catalog_automation.py"]
+    
+    
+  # Servicio para enmascaramiento de datos
+  data-masking:
+    extends: data-governance
+    container_name: deacero-data-masking
+    command: ["python", "scripts/data_masking.py"]
+    
+  # Servicio para ejecutar todo el pipeline
+  full-pipeline:
+    extends: data-governance
+    container_name: deacero-full-pipeline
+    command: ["/bin/bash", "-c", "python scripts/catalog_automation.py && python scripts/data_masking.py"]
+
+networks:
+  governance-network:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local
+
