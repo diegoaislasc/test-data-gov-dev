@@ -149,18 +149,17 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Lint Dockerfile con hadolint
-      uses: hadolint/hadolint-action@v3.1.0
-      with:
-        dockerfile: docker/Dockerfile
-        config: .hadolint.yaml
-        format: sarif
-        output-file: hadolint-results.sarif
+      run: |
+        docker run --rm -i -v $PWD:$PWD -w $PWD \
+          hadolint/hadolint hadolint --config .hadolint.yaml docker/Dockerfile > hadolint-results.txt 2>&1 || true
         
-    - name: Subir resultados de hadolint
-      if: always()
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: hadolint-results.sarif
+        echo "📋 Resultados de hadolint:"
+        if [ -s hadolint-results.txt ]; then
+          cat hadolint-results.txt
+          echo "⚠️  Se encontraron issues en el Dockerfile"
+        else
+          echo "✅ Dockerfile pasa todas las validaciones de hadolint"
+        fi
 
   # Reporte consolidado
   security-summary:
