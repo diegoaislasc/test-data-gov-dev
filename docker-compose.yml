@@ -24,12 +24,6 @@ services:
     
     
   # Nota: Enmascaramiento de datos y Aspect Types se configuran en GCP Console
-  
-  # Servicio para verificar configuración
-  verification:
-    extends: data-governance
-    container_name: deacero-verification
-    command: ["python", "scripts/verification_checklist.py"]
 
 networks:
   governance-network:
