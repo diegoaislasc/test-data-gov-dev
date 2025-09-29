@@ -236,8 +236,6 @@ pip install -r requirements.txt
 # Catalogación automatizada
 python scripts/catalog_automation.py
 
-# Aplicar Aspect Types
-python scripts/aspect_types.py
 ```
 
 #### Ejecutar con Docker
@@ -247,10 +245,6 @@ docker build -f docker/Dockerfile -t deacero-data-governance:latest .
 
 # Ejecutar servicios individuales
 docker-compose run catalog-automation
-docker-compose run aspect-types
-
-# Ejecutar pipeline completo
-docker-compose run full-pipeline
 ```
 
 #### CI/CD Pipeline
@@ -275,8 +269,7 @@ test-data-gov-dev/
 ├── config/
 │   └── metadata_config.yaml      # Configuración de metadatos
 ├── scripts/
-│   ├── catalog_automation.py     # Script de catalogación
-│   └── aspect_types.py          # Script de Aspect Types
+│   ├── catalog_automation.py     # Script de catalogación     
 ├── docker/
 │   └── Dockerfile               # Imagen Docker
 ├── .github/workflows/

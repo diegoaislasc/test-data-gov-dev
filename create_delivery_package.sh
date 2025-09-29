@@ -220,3 +220,4 @@ echo -e "\n${BLUE}¡Buena suerte en tu entrevista! 🚀${NC}"
 
 
 
+
